@@ -1,6 +1,7 @@
 #include <fineftp/server.h>
 
 #include "server_impl.h"
+#include "ftp_message.h"
 
 #include <cassert> // assert
 #include <cstddef> // size_t
@@ -8,35 +9,39 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <functional>
 
 #include <fineftp/permissions.h>
 
 namespace fineftp
 {
-  FtpServer::FtpServer(const std::string& address, const uint16_t port, std::ostream& output, std::ostream& error)
-    : ftp_server_(std::make_unique<FtpServerImpl>(address, port, output, error))
-  {}
+  FtpServer::FtpServer(const std::string &address, const uint16_t port, std::ostream &output, std::ostream &error)
+      : ftp_server_(std::make_unique<FtpServerImpl>(address, port, output, error))
+  {
+  }
 
-  FtpServer::FtpServer(const std::string& address, const uint16_t port)
-    : FtpServer(address, port, std::cout, std::cerr)
-  {}
+  FtpServer::FtpServer(const std::string &address, const uint16_t port)
+      : FtpServer(address, port, std::cout, std::cerr)
+  {
+  }
 
   FtpServer::FtpServer(const uint16_t port)
-    : FtpServer(std::string("0.0.0.0"), port, std::cout, std::cerr)
-  {}
+      : FtpServer(std::string("0.0.0.0"), port, std::cout, std::cerr)
+  {
+  }
 
   // Move
-  FtpServer::FtpServer(FtpServer&&) noexcept                = default;
-  FtpServer& FtpServer::operator=(FtpServer&&) noexcept     = default;
+  FtpServer::FtpServer(FtpServer &&) noexcept = default;
+  FtpServer &FtpServer::operator=(FtpServer &&) noexcept = default;
 
   FtpServer::~FtpServer() = default;
 
-  bool FtpServer::addUser(const std::string& username, const std::string& password, const std::string& local_root_path, const Permission permissions)
+  bool FtpServer::addUser(const std::string &username, const std::string &password, const std::string &local_root_path, const Permission permissions)
   {
     return ftp_server_->addUser(username, password, local_root_path, permissions);
   }
 
-  bool FtpServer::addUserAnonymous(const std::string& local_root_path, const Permission permissions)
+  bool FtpServer::addUserAnonymous(const std::string &local_root_path, const Permission permissions)
   {
     return ftp_server_->addUserAnonymous(local_root_path, permissions);
   }
@@ -65,5 +70,10 @@ namespace fineftp
   std::string FtpServer::getAddress() const
   {
     return ftp_server_->getAddress();
+  }
+
+  void FtpServer::setCommandCallback(const FtpCommandCallback &callback)
+  {
+    ftp_server_->setCommandCallback(callback);
   }
 }

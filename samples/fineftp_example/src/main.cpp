@@ -1,28 +1,30 @@
-#include <chrono>
+﻿#include <chrono>
 #include <fineftp/server.h>
 
 #include <string>
 #include <thread>
+#include <iostream>
 
-int main() {
+int main()
+{
 
 #ifdef WIN32
-  const std::string local_root =  "C:\\"; // The backslash at the end is necessary!
-#else // WIN32
-  const std::string local_root =  "/";
-#endif // WIN32
+  const std::string local_root = "D:\STORAGE"; // The backslash at the end is necessary!
+#else                                          // WIN32
+  const std::string local_root = "/";
+#endif                                         // WIN32
 
-  // Create an FTP Server on port 2121. We use 2121 instead of the default port
-  // 21, as your application would need root privileges to open port 21.
-  fineftp::FtpServer server(2121);
+  fineftp::FtpServer server(21);
 
-  // Add the well known anonymous user and some normal users. The anonymous user
-  // can log in with username "anonyous" or "ftp" and any password. The normal
-  // users have to provide their username and password. 
-  server.addUserAnonymous(local_root, fineftp::Permission::All);
-  server.addUser         ("MyUser",   "MyPassword", local_root, fineftp::Permission::ReadOnly);
-  server.addUser         ("Uploader", "123456",     local_root, fineftp::Permission::DirList | fineftp::Permission::DirCreate | fineftp::Permission::FileWrite | fineftp::Permission::FileAppend);
+  server.addUser("pacs", "pacs", local_root, fineftp::Permission::All);
 
+  server.setCommandCallback([](const std::string &command, const std::string &param,
+                               const fineftp::FtpReplyCode &reply_code, const std::string &reply_message)
+                            {
+    std::cout << "[CALLBACK] Command: " << command << " | Param: " << param
+              << " | Reply: " << static_cast<int>(reply_code) << " | Msg: " << reply_message << std::endl;
+
+  });
   // Start the FTP server with 4 threads. More threads will increase the
   // performance with multiple clients, but don't over-do it.
   server.start(4);

@@ -32,19 +32,31 @@ std::map<ReadableFile::Str, std::weak_ptr<ReadableFile>> files;
 
 ReadableFile::~ReadableFile()
 {
+  // Use lock early to prevent race conditions
+  const std::lock_guard<std::mutex> lock{guard};
+
   if (data_ != nullptr)
+  {
     ::UnmapViewOfFile(data_);
+    data_ = nullptr;
+  }
 
   if (map_handle_ != INVALID_HANDLE_VALUE)
+  {
     ::CloseHandle(map_handle_);
+    map_handle_ = INVALID_HANDLE_VALUE;
+  }
 
   if (handle_ != INVALID_HANDLE_VALUE)
+  {
     ::CloseHandle(handle_);
-
-  const std::lock_guard<std::mutex> lock{guard};
+    handle_ = INVALID_HANDLE_VALUE;
+  }
+  
   if (!path_.empty())
   {
     (void)files.erase(path_);
+    path_.clear();
   }
 }
 
